@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 The code below cleans and merges movie data files from two sources:
     IMDB
@@ -59,3 +61,5 @@ df_merged = df.loc[df._merge == 'both']
 df_clean = df.drop(columns = ['tconst', 'original_title_x', 'runtime_minutes', 'id_x', 'original_language', 'original_title_y', 'id_y'])
 df_clean_drop = df_clean.loc[(df_clean.numvotes.isna()) & (df_clean.vote_count.isna())]
 df_clean = df_clean.drop(df_clean_drop.index)
+
+df_clean.to_csv (data_directory+'export_df_clean.csv', index = None, header=True) 
