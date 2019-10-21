@@ -20,6 +20,7 @@ def df_clean(data_frame, release_date_column, movie_title_column):
     if data_frame[release_date_column].dtypes == 'int64':
         data_frame[release_date_column] = pd.to_datetime(data_frame[release_date_column], format = '%Y').dt.to_period("Y") # Assume that movies released in the same month of the same year are the same.
     else:
+        data_frame['release_year_month'] = pd.to_datetime(data_frame[release_date_column]).dt.to_period("M") # Assume that movies released in the same month of the same year are the same.
         data_frame[release_date_column] = pd.to_datetime(data_frame[release_date_column]).dt.to_period("Y") # Assume that movies released in the same month of the same year are the same.
     data_frame[movie_title_column] = [" ".join(title.upper().split()) for title in data_frame[movie_title_column]] # Remove whitespaces
     data_frame[movie_title_column] = [title.replace('Â', "'") for title in data_frame[movie_title_column]] 
@@ -27,7 +28,7 @@ def df_clean(data_frame, release_date_column, movie_title_column):
     data_frame[movie_title_column] = [title.replace('"', '') for title in data_frame[movie_title_column]]               
     data_frame.drop_duplicates([movie_title_column, release_date_column], keep = False, inplace = True)
     data_frame.sort_values(by = [release_date_column, movie_title_column], ascending = [False, True], inplace = True)
-    data_frame.rename(columns={release_date_column: 'release_date', movie_title_column: 'title'}, inplace = True)
+    data_frame.rename(columns={release_date_column: 'release_year', movie_title_column: 'title'}, inplace = True)
     return data_frame
     
 # Merge Movie DB dataframes
@@ -35,8 +36,8 @@ df_mdb_ratings.drop('Unnamed: 0', axis = 1, inplace = True) # This is an extra i
 df_mdb_ratings = df_clean(df_mdb_ratings, 'release_date', 'title')
 df_mdb_revenues = df_clean(df_mdb_revenues, 'release_date', 'movie')
 df_mdb = pd.merge(df_mdb_ratings, df_mdb_revenues, how = 'outer', \
-              left_on = ['title', 'release_date'], \
-              right_on = ['title', 'release_date'], \
+              left_on = ['title', 'release_year_month', 'release_year'], \
+              right_on = ['title', 'release_year_month', 'release_year'], \
               indicator = True, validate="one_to_one", \
               sort = True)
 
@@ -48,8 +49,13 @@ df_imdb = pd.merge(df_imdb_basics, df_imdb_ratings, how = 'outer', \
 
 # Merge Movie DB and IMDB dataframes
 df = pd.merge(df_imdb.drop(columns = '_merge'), df_mdb.drop(columns = '_merge'), how = 'outer', \
-              left_on = ['title', 'release_date'], \
-              right_on = ['title', 'release_date'], \
-              indicator = True, validate="many_to_one", \
+              left_on = ['title', 'release_year'], \
+              right_on = ['title', 'release_year'], \
+              indicator = True, validate="many_to_many", \
               sort = True)
 df_merged = df.loc[df._merge == 'both']
+
+# Clean the merged dataframe
+df_clean = df.drop(columns = ['tconst', 'original_title_x', 'runtime_minutes', 'id_x', 'original_language', 'original_title_y', 'id_y'])
+df_clean_drop = df_clean.loc[(df_clean.numvotes.isna()) & (df_clean.vote_count.isna())]
+df_clean = df_clean.drop(df_clean_drop.index)
