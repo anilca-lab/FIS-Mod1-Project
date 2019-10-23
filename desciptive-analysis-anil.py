@@ -104,3 +104,22 @@ lp_small = df_budget.loc[(df_budget.production_budget_int <= 90*(10**6)) & (df_b
 plt.scatter(np.log(df_budget.numvotes), df_budget.roi)
 plt.scatter(np.log(df_budget.averagerating), df_budget.roi)
 plt.scatter(np.log(df_budget.averagerating), np.log(df_budget.numvotes))
+df_budget_annual_sum = df_budget.loc[(df_budget.release_year >=2010) & \
+                                     (df_budget.release_year <= 2018)]. \
+                                     groupby(['release_year']). \
+                                     sum()
+plt.fill_between(df_budget_annual_sum.index, \
+                 (df_budget_annual_sum.production_budget_int)*(10**(-9)), \
+                 (df_budget_annual_sum.worldwide_gross_int)*(10**(-9)), \
+                 color='g')
+plt.xlabel('Release year')
+plt.ylabel('Production budget and worldwide revenues\n(in billions)')
+plt.title('Increasing returns to movie production')
+plt.show()
+df_clean_annual_count = df_clean.loc[(df_clean.release_year >=2010) & \
+                                     (df_clean.release_year <= 2018)]. \
+                                     groupby(['release_year']). \
+                                     title.count() 
+plt.plot(df_clean.release_year, )
+df_budget_large = df_budget.loc[df_budget.production_budget_int > 90*(10**6)]
+df_budget_large.loc[df_budget_large_genres ]    
